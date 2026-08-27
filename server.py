@@ -66,7 +66,7 @@ def worker(job_id,src,niche,count):
 
 @app.route("/")
 def home():
-    return "ClipCash AI Backend is running!"
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.post("/api/process")
 def process():
