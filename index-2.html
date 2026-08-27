@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClipCash AI — Auto Clipper</title>
+<style>
+body{margin:0;background:#080b10;color:#f4f7fb;font-family:Arial,sans-serif}.wrap{max-width:1100px;margin:auto;padding:20px}
+.logo{font-size:26px;font-weight:800}.logo span{color:#6ee7b7}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.hero,.card{background:#11161e;border:1px solid #27303c;border-radius:20px;padding:22px;margin-bottom:18px}.hero h1{font-size:38px;margin:0 0 8px}.muted{color:#98a3b4}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{display:block;color:#aab4c4;font-size:13px;margin:10px 0 6px}
+input,select{width:100%;box-sizing:border-box;background:#0a0e14;border:1px solid #303947;color:#fff;border-radius:10px;padding:12px}
+.drop{border:2px dashed #334050;border-radius:15px;padding:30px;text-align:center}.drop input{border:0}.go{background:#6ee7b7;border:0;border-radius:11px;padding:13px 18px;font-weight:800;margin-top:15px;cursor:pointer}
+.progress{height:10px;background:#202631;border-radius:99px;overflow:hidden;margin-top:14px}.bar{height:100%;width:0;background:#6ee7b7;transition:.4s}
+.out{white-space:pre-wrap;background:#0a0e14;border:1px solid #27303c;border-radius:12px;padding:15px;margin-top:15px}.clips{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.clip{background:#0c1118;border:1px solid #293341;border-radius:15px;padding:15px}.clip h3{margin-top:0}.download{display:inline-block;margin-top:10px;color:#6ee7b7}
+@media(max-width:700px){.grid,.clips{grid-template-columns:1fr}.hero h1{font-size:30px}}
+</style></head><body><div class="wrap">
+<header><div class="logo">ClipCash <span>AI</span></div><div class="muted">Automatic Shorts Engine</div></header>
+<section class="hero"><h1>Upload. Analyze. Clip. Post.</h1><p class="muted">Upload a raw video and the server extracts audio, transcribes it with timestamps, finds strong moments with AI, creates vertical clips and burns readable captions.</p></section>
+<section class="card">
+<div class="drop"><input id="video" type="file" accept="video/*"><p id="name">Choose a video</p></div>
+<div class="grid">
+<div><label>Niche</label><input id="niche" placeholder="cars, podcasts, motivation..."></div>
+<div><label>Number of Shorts</label><select id="count"><option>3</option><option selected>5</option><option>10</option></select></div>
+</div>
+<button class="go" onclick="run()">🚀 Generate Shorts</button>
+<div class="progress"><div id="bar" class="bar"></div></div><p id="status" class="muted">Ready.</p>
+</section>
+<section class="card"><h2>Generated Shorts</h2><div id="results" class="clips"></div></section>
+</div>
+<script>
+const video=document.getElementById('video');video.onchange=()=>document.getElementById('name').textContent=video.files[0]?.name||'Choose a video';
+async function run(){
+ if(!video.files[0]) return alert('Choose a video first.');
+ const fd=new FormData();fd.append('video',video.files[0]);fd.append('niche',document.getElementById('niche').value);fd.append('count',document.getElementById('count').value);
+ const bar=document.getElementById('bar'), status=document.getElementById('status'), results=document.getElementById('results');
+ results.innerHTML='';bar.style.width='8%';status.textContent='Uploading video...';
+ try{const r=await fetch('/api/process',{method:'POST',body:fd});if(!r.ok)throw Error((await r.json()).error||'Processing failed');const job=await r.json();status.textContent='Processing...';poll(job.job_id);}
+ catch(e){status.textContent=e.message}
+}
+async function poll(id){
+ const bar=document.getElementById('bar'),status=document.getElementById('status');
+ const timer=setInterval(async()=>{const r=await fetch('/api/jobs/'+id);const j=await r.json();bar.style.width=j.progress+'%';status.textContent=j.message;
+ if(j.status==='done'){clearInterval(timer);render(j.clips)} if(j.status==='error'){clearInterval(timer);status.textContent=j.message}},1200)
+}
+function render(clips){
+ const box=document.getElementById('results');box.innerHTML='';
+ clips.forEach(c=>{box.innerHTML+=`<div class="clip"><h3>${esc(c.title)} · ${c.score}/10</h3><p><b>Hook:</b> ${esc(c.hook)}</p><p><b>Caption:</b> ${esc(c.caption)}</p><p><b>Range:</b> ${c.start}s → ${c.end}s</p><p>${esc(c.edit_notes)}</p><a class="download" href="${c.url}" download>Download Short</a></div>`})
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+</script></body></html>
