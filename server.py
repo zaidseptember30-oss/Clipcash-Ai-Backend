@@ -2,10 +2,12 @@ import os, uuid, json, subprocess, shutil, threading
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
+from openai import OpenAI
 
 BASE=Path(__file__).resolve().parent
 OUT=BASE/"outputs"; OUT.mkdir(exist_ok=True)
-app=Flask(__name__,static_folder="public")CORS(app)
+app=Flask(__name__,static_folder="public")
+CORS(app)
 client=OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 JOBS={}
 
