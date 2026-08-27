@@ -62,8 +62,9 @@ def worker(job_id,src,niche,count):
     except Exception as e:
         JOBS[job_id].update(status="error",progress=100,message=str(e))
 
-@app.get("/")
-def home(): return send_from_directory("public","index.html")
+@app.route("/")
+def home():
+    return "ClipCash AI Backend is running!"
 
 @app.post("/api/process")
 def process():
