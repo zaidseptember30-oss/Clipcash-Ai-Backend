@@ -6,9 +6,6 @@ from openai import OpenAI
 BASE=Path(__file__).resolve().parent
 OUT=BASE/"outputs"; OUT.mkdir(exist_ok=True)
 app=Flask(__name__,static_folder="public")
-@app.route("/")
-def home():
-    return "ClipCash AI Backend is running!"
 client=OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 JOBS={}
 
